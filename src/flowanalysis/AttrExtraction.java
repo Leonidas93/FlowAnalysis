@@ -33,7 +33,6 @@ public class AttrExtraction {
             String [] s = line.split("(?!\\w),(?!(\\s|\\w|%|$|@|#|\\?|<|>|(\\{)|(\\})|(\\!)|(\"\"\\w)))"); 
             for(int j=0; j<s.length; j++){
                 s[j] = s[j].replaceAll("\"","");
-                //System.out.println(s[j]);
             }
             if (i==0){  //the headers of csv
                 continue;
@@ -108,7 +107,6 @@ public class AttrExtraction {
             String [] s = line.split("(?!\\w),(?!(\\s|\\w|%|$|@|#|\\?|<|>|(\\{)|(\\})|(\\!)|(\"\"\\w)))"); 
             for(int j=0; j<s.length; j++){
                 s[j] = s[j].replaceAll("\"","");
-                //System.out.println(s[j]);
             }
             if (i==0){  //the headers of csv
                 continue;
@@ -170,11 +168,6 @@ public class AttrExtraction {
             out.write(String.valueOf(conv.get(j).per2())+",");
             out.write(String.valueOf(conv.get(j).per3())+",");
             out.write(String.valueOf(conv.get(j).getStatus()));
-            
-            /*String attr = conv.get(j).totalPackets()+","+conv.get(j).totalLength()+","+conv.get(j).totalPayload()+","+conv.get(j).FlowDuration()
-                    +","+conv.get(j).pps()+","+conv.get(j).bps()+","+conv.get(j).meanBytes()+","+conv.get(j).median()+","+conv.get(j).stdPayload()
-                    +","+conv.get(j).per1()+","+conv.get(j).per2()+","+conv.get(j).per3();
-            out.write(attr);*/
             
             out.write("\n");
         }
@@ -265,11 +258,6 @@ public class AttrExtraction {
             
             out.write("\n");
             
-            /*String attr = conv.get(j).totalPackets()+","+conv.get(j).totalLength()+","+conv.get(j).FlowDuration()
-                    +","+conv.get(j).pps()+","+conv.get(j).bps()+","+conv.get(j).perSYN()+","+conv.get(j).perSYNACK()
-                    +","+conv.get(j).perACK()+","+conv.get(j).perPUSHACK()+","+conv.get(j).meanBytes()+","+conv.get(j).stdBytes();
-                   
-            out.write(attr);*/
         }
         
         out.close();

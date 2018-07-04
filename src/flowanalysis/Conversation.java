@@ -310,7 +310,6 @@ public class Conversation implements Comparable<Conversation>{
         for(int i=0; i<this.packets.size(); i++){
             if((this.packets.get(i).sourcePort == this.portA)){ 
                 sum++;
-                //System.out.println(this.packets.get(i).source+" , "+this.packets.get(i).destination);
             }
         }
         return sum;
@@ -345,8 +344,5 @@ public class Conversation implements Comparable<Conversation>{
         }
         return sum;
     }
- 
-    private int digits(int i){
-        return (int)(Math.log10(i) + 1);
-    }
+
 }
