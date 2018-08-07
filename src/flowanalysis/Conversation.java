@@ -211,14 +211,14 @@ public class Conversation implements Comparable<Conversation>{
         return (temp2/temp1)*100;
     }
     
-    //% of packets [128, 2014] bytes
+    //% of packets [128, 1024] bytes
     public double per2(){
         double temp1 = 0;
         double temp2 = 0;
         
         for(int i=0; i<this.packets.size(); i++){
             temp1 += packets.get(i).length;
-            if((packets.get(i).length >= 128) && (packets.get(i).length <= 1024)){
+            if((packets.get(i).length >= 128) && (packets.get(i).length < 1024)){
                temp2 += packets.get(i).length;
             }
         }
@@ -226,14 +226,29 @@ public class Conversation implements Comparable<Conversation>{
         return (temp2/temp1)*100;
     }
     
-    //% of packets >1024 bytes
+    //% of packets [1024, 1518] bytes
     public double per3(){
         double temp1 = 0;
         double temp2 = 0;
         
         for(int i=0; i<this.packets.size(); i++){
             temp1 += packets.get(i).length;
-            if(packets.get(i).length > 1024){
+            if((packets.get(i).length >= 1024) && (packets.get(i).length <= 1518)){
+               temp2 += packets.get(i).length;
+            }
+        }
+        
+        return (temp2/temp1)*100;
+    }
+    
+    //% of packets >1518 bytes
+    public double per4(){
+        double temp1 = 0;
+        double temp2 = 0;
+        
+        for(int i=0; i<this.packets.size(); i++){
+            temp1 += packets.get(i).length;
+            if(packets.get(i).length > 1518){
                temp2 += packets.get(i).length;
            }
         }

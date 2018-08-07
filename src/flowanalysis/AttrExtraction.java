@@ -15,257 +15,8 @@ import java.util.Scanner;
  */
 public class AttrExtraction {
     
-    //set of attributes 1
-    public void extractSet1(String fp, String nfl) throws FileNotFoundException, IOException{
-        
-        File frp = new File (fp);  // file with raw packets
-        File nFile = new File(nfl);
-        
-        Scanner scanner = new Scanner(frp);
-        scanner.useDelimiter(",");
-        BufferedWriter out = new BufferedWriter(new FileWriter(nFile));        
-        
-        ArrayList <Packet> pa = new ArrayList<>();  //raw packets read from the frp file
-        ArrayList <Conversation> conv = new ArrayList<>();
-        
-        for(int i=0; scanner.hasNext(); i++){    
-            String line = scanner.nextLine();
-            String [] s = line.split("(?!\\w),(?!(\\s|\\w|%|$|@|#|\\?|<|>|(\\{)|(\\})|(\\!)|(\"\"\\w)))"); 
-            for(int j=0; j<s.length; j++){
-                s[j] = s[j].replaceAll("\"","");
-            }
-            if (i==0){  //the headers of csv
-                continue;
-            }
-            else{     //the values
-                if(s[7].equals("")){ //s[7] -> duration
-                   s[7] = "0";
-                }
-                if(s[8].equals("")) // source port will be "" for udp, ssdp, dhcp,etc.
-                    s[8] = "0";
-                if(s[9].equals(""))  //destination port will be "" for udp, ssdp, dhcp,etc.
-                    s[9] = "0";
-                
-                Packet p = new Packet(Integer.parseInt(s[0]),Double.parseDouble(s[1]),
-                        s[2],s[3],s[4],Integer.parseInt(s[5]),s[6],Integer.parseInt(s[7]),
-                        Integer.parseInt(s[8]),Integer.parseInt(s[9]),s[10],s[11]);
-                
-                pa.add(p);
-            }        
-            
-        }
-        
-        conv = flowExtr(pa);
-        
-        String header = "Packets,Bytes,Packets A-B,Bytes A-B,Packets B-A,"
-                + "Bytes B-A,Flow Duration,Packets/sec,Bytes/packet,Status";
-        
-        out.write(header);
-        out.write("\n");
-        
-        for(int j=0; j<conv.size(); j++){
-            out.write(conv.get(j).totalPackets()+",");
-            out.write(conv.get(j).totalLength()+",");
-            out.write(conv.get(j).forwardPackets()+",");
-            out.write(conv.get(j).forwardBytes()+",");
-            out.write(conv.get(j).backwardPackets()+",");
-            out.write(conv.get(j).backwardBytes()+",");
-            out.write(String.valueOf(conv.get(j).FlowDuration())+",");
-            
-            if(conv.get(j).FlowDuration()==0){              // for "infinity" values of packets/sec that come up as a result of 0 flow duration
-                out.write(String.valueOf(meanPPS(conv))+",");
-            }
-            else
-                out.write(String.valueOf(conv.get(j).pps())+",");
-            
-            out.write(String.valueOf(conv.get(j).meanBytes())+",");
-            out.write(String.valueOf(conv.get(j).getStatus()));
-           
-            out.write("\n");
-        }
-        
-        out.close();
-        scanner.close();
-                
-    }
-    
-    //set of attributes 2
-    public void extractSet2(String fp, String nfl) throws FileNotFoundException, IOException{
-
-        File frp = new File (fp);  // file with raw packets
-        File nFile = new File(nfl);
-        
-        Scanner scanner = new Scanner(frp);
-        scanner.useDelimiter(",");
-        BufferedWriter out = new BufferedWriter(new FileWriter(nFile));        
-        
-        ArrayList <Packet> pa = new ArrayList<>();  //raw packets read from the frp file
-        ArrayList <Conversation> conv = new ArrayList<>();
-        
-        for(int i=0; scanner.hasNext(); i++){    
-            String line = scanner.nextLine();
-            String [] s = line.split("(?!\\w),(?!(\\s|\\w|%|$|@|#|\\?|<|>|(\\{)|(\\})|(\\!)|(\"\"\\w)))"); 
-            for(int j=0; j<s.length; j++){
-                s[j] = s[j].replaceAll("\"","");
-            }
-            if (i==0){  //the headers of csv
-                continue;
-            }
-            else{     //the values
-                if(s[7].equals("")){ //s[7] -> duration
-                   s[7] = "0";
-                }
-                if(s[8].equals("")) // source port will be "" for udp, ssdp, dhcp,etc.
-                    s[8] = "0";
-                if(s[9].equals(""))  //destination port will be "" for udp, ssdp, dhcp,etc.
-                    s[9] = "0";
-                
-                Packet p = new Packet(Integer.parseInt(s[0]),Double.parseDouble(s[1]),
-                        s[2],s[3],s[4],Integer.parseInt(s[5]),s[6],Integer.parseInt(s[7]),
-                        Integer.parseInt(s[8]),Integer.parseInt(s[9]),s[10],s[11]);
-                
-                pa.add(p);
-            }        
-            
-        }
-        
-        conv = flowExtr(pa);
-        
-        String header = "Packets,Bytes,Payload,Flow duration,Packets/second,Bytes/second,Mean bytes/packet,Median payload/packet,"
-                + "Standard deviation payload/packets,% packets <128 B,% packets \\[128 1024\\] B,% packets >1024 B,Status";
-        
-        out.write(header);
-        out.write("\n");
-        
-        for(int j=0; j<conv.size(); j++){
-            out.write(conv.get(j).totalPackets()+",");
-            out.write(conv.get(j).totalLength()+",");
-            out.write(conv.get(j).totalPayload()+",");
-            out.write(String.valueOf(conv.get(j).FlowDuration())+",");
-            
-            if(conv.get(j).FlowDuration()==0){              // for "infinity" values of packets/sec that come up as a result of 0 flow duration
-                out.write(String.valueOf(meanPPS(conv))+",");
-            }
-            else
-                out.write(String.valueOf(conv.get(j).pps())+",");
-            
-            if(conv.get(j).FlowDuration()==0){              // for "infinity" values of bytes/sec that come up as a result of 0 flow duration
-                out.write(String.valueOf(meanBPS(conv))+",");
-            }
-            else
-                out.write(String.valueOf(conv.get(j).bps())+",");
-            
-            out.write(String.valueOf(conv.get(j).meanBytes())+",");
-            out.write(String.valueOf(conv.get(j).median())+",");
-            
-            if(conv.get(j).totalPackets()==1){
-                out.write(String.valueOf(meanSTDPayload(conv))+",");
-            }
-            else
-                out.write(String.valueOf(conv.get(j).stdPayload())+",");
-            
-            out.write(String.valueOf(conv.get(j).per1())+",");
-            out.write(String.valueOf(conv.get(j).per2())+",");
-            out.write(String.valueOf(conv.get(j).per3())+",");
-            out.write(String.valueOf(conv.get(j).getStatus()));
-            
-            out.write("\n");
-        }
-        
-        out.close();
-        scanner.close();
-        
-    }
-    
-    //set of attributes 3
-    public void extractSet3(String fp, String nfl) throws FileNotFoundException, IOException{
-        File frp = new File (fp);  // file with raw packets
-        File nFile = new File(nfl); // new file
-        
-        Scanner scanner = new Scanner(frp);
-        scanner.useDelimiter(",");
-        BufferedWriter out = new BufferedWriter(new FileWriter(nFile));
-   
-        ArrayList <Packet> pa = new ArrayList<>();  //raw packets read from the frp file
-        ArrayList <Conversation> conv = new ArrayList<>();
-        
-        for(int i=0; scanner.hasNext(); i++){    
-            String line = scanner.nextLine();
-            String [] s = line.split("(?!\\w),(?!(\\s|\\w|%|$|@|#|\\?|<|>|(\\{)|(\\})|(\\!)|(\"\"\\w)))"); //    "(?!a-zA-Z)," 
-            
-            for(int j=0; j<s.length; j++){
-                s[j] = s[j].replaceAll("\"","");
-            }
-            if (i==0){  //the headers of csv
-                continue;
-            }
-            else{     //the values
-                if(s[7].equals("")) //s[7] -> duration
-                   s[7] = "0";
-                if(s[8].equals("")) // source port will be "" for udp, ssdp, dhcp,etc.
-                    s[8] = "0";
-                if(s[9].equals(""))  //destination port will be "" for udp, ssdp, dhcp,etc.
-                    s[9] = "0";    
-                
-                Packet p = new Packet(Integer.parseInt(s[0]),Double.parseDouble(s[1]),
-                        s[2],s[3],s[4],Integer.parseInt(s[5]),s[6],Integer.parseInt(s[7]),Integer.parseInt(s[8]),
-                        Integer.parseInt(s[9]),s[10],s[11]);
-                
-                pa.add(p);
-            }        
-            
-        }
-        
-        conv = flowExtr(pa);
-        
-        String header = "Packets,Bytes,Flow duration,Packets/second,Bytes/second,% SYN packets,% SYN/ACK packets,% ACK packets,"
-                + "% PSH/ACK packets,Mean bytes/packet,Standard deviation bytes/packets,Status";
-        
-        out.write(header);
-        out.write("\n");
-        
-        for(int j=0; j<conv.size(); j++){
-            out.write(conv.get(j).totalPackets()+",");
-            out.write(conv.get(j).totalLength()+",");
-            out.write(String.valueOf(conv.get(j).FlowDuration())+",");
-            
-            if(conv.get(j).FlowDuration()==0){              // for "infinity" values of packets/sec that come up as a result of 0 flow duration
-                out.write(String.valueOf(meanPPS(conv))+",");
-            }
-            else
-                out.write(String.valueOf(conv.get(j).pps())+",");
-            
-            if(conv.get(j).FlowDuration()==0){              // for "infinity" values of bytes/sec that come up as a result of 0 flow duration
-                out.write(String.valueOf(meanBPS(conv))+",");
-            }
-            else
-                out.write(String.valueOf(conv.get(j).bps())+",");
-            
-            out.write(String.valueOf(conv.get(j).perSYN())+",");
-            out.write(String.valueOf(conv.get(j).perSYNACK())+",");
-            out.write(String.valueOf(conv.get(j).perACK())+",");
-            out.write(String.valueOf(conv.get(j).perPUSHACK())+",");
-            out.write(String.valueOf(conv.get(j).meanBytes())+",");
-            
-            if(conv.get(j).totalPackets()==1){
-                out.write(String.valueOf(meanSTDBytes(conv))+",");
-            }
-                    
-            else
-                out.write(String.valueOf(conv.get(j).stdBytes())+",");
-            
-            out.write(String.valueOf(conv.get(j).getStatus()));
-            
-            out.write("\n");
-            
-        }
-        
-        out.close();
-        scanner.close();
-    }
-    
-    //set of attributes 4
-    public void extractSet4(String fp, String nfl) throws FileNotFoundException, IOException{
+    //superset of attributes
+    public void superSet(String fp, String nfl) throws FileNotFoundException, IOException{
         File frp = new File (fp);  // file with raw packets
         File nFile = new File(nfl); // new file
         
@@ -299,23 +50,28 @@ public class AttrExtraction {
                         Integer.parseInt(s[9]),s[10],s[11]);
                 
                 pa.add(p);
-            }        
-            
+            }                    
         }
         
         conv = flowExtr(pa);
         
-        String header = "Packets,Bytes,Flow duration,Length of first packet,Bytes/packet,Packets/sec,Bits/sec,Total HTTP GET,Status"; //"Status" -> 0 for benign traffic, 1 for malicious traffic
+        String header = "Flow duration,Total packets,Forward packets,Backward packets,Total bytes,Forward bytes,Backward bytes,Packets/sec,Bytes/packet,"
+                + "Total payload length,Median payload bytes/packets,Std of payload bytes/packets,% of packets <128 B,"
+                + "% of packets [128, 1024)B,% of packets [1024, 1518]B,% of packets >1518B,Bytes/sec,% of SYN packets,% of SYN/ACK packets,"
+                + "% of ACK packets, % of ACK/PUSH packets,Std of bytes/packet,Length of first packet in flow,Total HTTP/GET requests,Status"; //"Status" -> 0 for benign traffic, 1 for malicious traffic
         
         out.write(header);
         out.write("\n");
         
         for(int j=0; j<conv.size(); j++){
-            out.write(conv.get(j).totalPackets()+",");
-            out.write(conv.get(j).totalLength()+",");
+            
             out.write(String.valueOf(conv.get(j).FlowDuration())+",");
-            out.write(String.valueOf(conv.get(j).firstPacketLength())+",");
-            out.write(String.valueOf(conv.get(j).meanBytes())+",");
+            out.write(conv.get(j).totalPackets()+",");
+            out.write(conv.get(j).forwardPackets()+",");
+            out.write(conv.get(j).backwardPackets()+",");
+            out.write(conv.get(j).totalLength()+",");
+            out.write(conv.get(j).forwardBytes()+",");            
+            out.write(conv.get(j).backwardBytes()+",");
             
             if(conv.get(j).FlowDuration()==0){              // for "infinity" values of packets/sec that come up as a result of 0 flow duration
                 out.write(String.valueOf(meanPPS(conv))+",");
@@ -323,12 +79,40 @@ public class AttrExtraction {
             else
                 out.write(String.valueOf(conv.get(j).pps())+",");
             
+            out.write(String.valueOf(conv.get(j).meanBytes())+",");
+            out.write(conv.get(j).totalPayload()+",");
+            out.write(String.valueOf(conv.get(j).median())+",");
+            
+            if(conv.get(j).totalPackets()==1){
+                out.write(String.valueOf(meanSTDPayload(conv))+",");
+            }
+            else
+                out.write(String.valueOf(conv.get(j).stdPayload())+",");           
+            
+            out.write(String.valueOf(conv.get(j).per1())+",");
+            out.write(String.valueOf(conv.get(j).per2())+",");
+            out.write(String.valueOf(conv.get(j).per3())+",");
+            out.write(String.valueOf(conv.get(j).per4())+",");
+            
             if(conv.get(j).FlowDuration()==0){              // for "infinity" values of bytes/sec that come up as a result of 0 flow duration
                 out.write(String.valueOf(meanBPS(conv))+",");
             }
             else
                 out.write(String.valueOf(conv.get(j).bps())+",");
             
+            out.write(String.valueOf(conv.get(j).perSYN())+",");
+            out.write(String.valueOf(conv.get(j).perSYNACK())+",");
+            out.write(String.valueOf(conv.get(j).perACK())+",");
+            out.write(String.valueOf(conv.get(j).perPUSHACK())+",");
+            
+            if(conv.get(j).totalPackets()==1){
+                out.write(String.valueOf(meanSTDBytes(conv))+",");
+            }
+                    
+            else
+                out.write(String.valueOf(conv.get(j).stdBytes())+",");
+            
+            out.write(String.valueOf(conv.get(j).firstPacketLength())+",");
             out.write(String.valueOf(conv.get(j).totalGETRequest())+",");
             out.write(String.valueOf(conv.get(j).getStatus()));
             
